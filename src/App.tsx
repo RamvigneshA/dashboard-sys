@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import './App.css';
 import { Linechart } from './Line';
-import { Radialchart } from './Radial';
-
-const time = {
-    ALL: 'all',
-  '30_SEC': 'last30sec',
-  '1_MIN': 'last1min',
-  '2_MIN':'last2min'
-}
+import { RAMUsageChart } from './Radial';
+import { MemoryUsageChart } from './PieChart';
+import { BatteryCard } from './components/BatteryCard';
+import { useWebSocket } from './hooks/useWebSocket';
+import { useFilteredData, TIME_FILTERS } from './hooks/useFilteredData';
+import { ThemeToggle } from './components/ThemeToggle';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -75,10 +75,30 @@ function App() {
         </DropdownMenu>
       </div>
 
-      <div className="lg:flex gap-10 md:flex ">
-        {/* <Barchart data={countryData} /> */}
-        <Linechart data={filteredData} />
-        <Radialchart data={filteredData} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8 p-6">
+        {searchTerm === '' ? (
+          charts.map((chart) => (
+            <div key={chart.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 hover:shadow-xl transition-shadow">
+              <h3 className="text-xl font-semibold mb-4 dark:text-white">{chart.title}</h3>
+              {chart.component}
+            </div>
+          ))
+        ) : filteredCharts.length > 0 ? (
+          filteredCharts.map((chart) => (
+            <div key={chart.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 hover:shadow-xl transition-shadow">
+              <h3 className="text-xl font-semibold mb-4 dark:text-white">{chart.title}</h3>
+              {chart.component}
+            </div>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-12">
+            <h2 className="text-2xl font-semibold text-gray-600 dark:text-gray-300">No charts found</h2>
+            <p className="text-gray-500 dark:text-gray-400">Try adjusting your search term</p>
+            <p className="text-gray-500 dark:text-gray-400">
+              SEARCH FOR THESE TERMS: CPU Usage, RAM Usage, ROM Memory, Battery Status
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
