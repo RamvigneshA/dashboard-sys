@@ -1,7 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import './App.css';
-import { Button } from '@/components/ui/button';
-import Barchart from './Bar';
 import { Linechart } from './Line';
 import { Radialchart } from './Radial';
 
@@ -13,63 +11,70 @@ const time = {
 }
 
 function App() {
-  const [systemMetrics, setSystemMetrics] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterTimeframe, setFilterTimeframe] = useState(time.ALL); // New state for filtering
+  const metrics = useWebSocket('ws://localhost:8080');
+  const { filteredData, timeframe, setTimeframe } = useFilteredData(metrics);
+  const latestData = filteredData[filteredData.length - 1];
 
-  useEffect(() => {
-    const socket = new WebSocket('ws://localhost:8080');
+  const charts = [
+    {
+      id: 'cpu',
+      title: 'CPU Usage',
+      component: <Linechart data={filteredData} />,
+    },
+    {
+      id: 'ram',
+      title: 'RAM Usage',
+      component: <RAMUsageChart data={filteredData} />,
+    },
+    {
+      id: 'rom',
+      title: 'ROM Memory',
+      component: <MemoryUsageChart memInfo={latestData?.rom} />,
+    },
+    {
+      id: 'battery',
+      title: 'Battery Status',
+      component: <BatteryCard batteryData={latestData?.battery} />,
+    },
+  ];
 
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-
-      setSystemMetrics((prevMetrics) => [...prevMetrics, data]); // Append new metric data
-    };
-
-    return () => socket.close();
-  }, []);
-
-  const filteredData = systemMetrics.filter((item) => {
-    // Determine if the item is within the specified timeframe
-    const itemTimestamp = new Date(item?.timestamp).getTime();
-    const now = Date.now();
-    const withinTimeframe =
-    filterTimeframe === time.ALL||
-    (filterTimeframe === time['30_SEC']&& (now - itemTimestamp <= 30000)) || // Last 30 seconds
-    (filterTimeframe === time['1_MIN'] && (now - itemTimestamp <= 60000)) || // Last 1 minute
-    (filterTimeframe === time['2_MIN'] && (now - itemTimestamp <= 120000)); // Last 2 minutes
-    return withinTimeframe;
-  });
-
-  // Return true if the item is within the timeframe and matches the search term
-  // console.log('🚀 ~ App ~ filteredData:', filteredData);
+  const filteredCharts = charts.filter((chart) =>
+    chart.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">System Metrics</h1>
-        <p className="text-gray-500">Real-time system metrics and analytics</p>
-      </div>
-      <div>
-        <input
+    <div className="min-h-screen bg-white dark:bg-gray-900 dark:text-white transition-colors">
+      <header className="mb-8 flex justify-between items-center p-4">
+        <div>
+          <h1 className="text-3xl font-bold dark:text-white text-left">System Metrics</h1>
+          <p className="text-gray-500 dark:text-gray-400">Real-time system metrics and analytics</p>
+        </div>
+        <ThemeToggle />
+      </header>
+
+      <div className="flex gap-4 mb-4 justify-center">
+        <Input
+          className="max-w-xs"
           type="text"
-          placeholder="Search by timestamp..."
+          placeholder="Search by chart name ..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="border p-2 mb-4"
         />
-        <select
-          value={filterTimeframe}
-          onChange={(e) => setFilterTimeframe(e.target.value)}
-          className="border p-2 mb-4"
-        >
-          <option value={time.ALL}>All Time</option>
-          <option value={time['30_SEC']}>30sec</option>
-          <option value={time['1_MIN']}>1sec</option>
-          <option value={time['2_MIN']}>2sec</option>
-        </select>
+        <DropdownMenu>
+          <DropdownMenuTrigger className="rounded-md px-4 dark:bg-gray-800 dark:border-gray-700 dark:text-white min-w-fit">
+            {Object.entries(TIME_FILTERS).find(([, value]) => value === timeframe)?.[0].replace('_', ' ').toLowerCase()}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {Object.entries(TIME_FILTERS).map(([key, value]) => (
+              <DropdownMenuItem key={key} onSelect={() => setTimeframe(value)}>
+                {key.replace('_', ' ').toLowerCase()}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-      
+
       <div className="lg:flex gap-10 md:flex ">
         {/* <Barchart data={countryData} /> */}
         <Linechart data={filteredData} />
