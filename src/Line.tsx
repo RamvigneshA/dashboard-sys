@@ -1,4 +1,3 @@
-import { TrendingUp } from 'lucide-react';
 import { CartesianGrid, Line, LineChart, XAxis } from 'recharts';
 import {
   Card,
@@ -47,7 +46,15 @@ export function Linechart({ data }) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => value.slice(0, 3)}
+              tickFormatter={(value) => {
+                const date = new Date(value);
+                return date.toLocaleTimeString('en-IN', {
+                  timeZone: 'Asia/Kolkata',
+                  hour12: false,
+                  hour: '2-digit',
+                  minute: '2-digit',
+                });
+              }}
             />
             <ChartTooltip
               cursor={false}
@@ -64,11 +71,8 @@ export function Linechart({ data }) {
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
-        {/* <div className="flex gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div> */}
         <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
+          CPU Usage
         </div>
       </CardFooter>
     </Card>
