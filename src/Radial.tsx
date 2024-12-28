@@ -1,4 +1,3 @@
-
 import { TrendingUp } from "lucide-react"
 import {
   Label,
@@ -10,38 +9,40 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
 import { ChartConfig, ChartContainer } from "@/components/ui/chart"
-const chartData = [
-  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-]
+
 const chartConfig = {
-  visitors: {
-    label: "Visitors",
+  value: {
+    label: "Usage",
   },
-  safari: {
-    label: "Safari",
+  ram: {
+    label: "RAM",
     color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig
-export function Radialchart({ data }) {
-  const Data = data[data.length-1];
-  console.log("🚀 ~ Radialchart ~ Data:", Data);
-  function convertToDegrees(value) {
-    if (value < 0 || value > 100) {
-        throw new Error("Value must be between 0 and 100");
+
+export function RAMUsageChart({ data }) {
+  const latestData = data[data.length - 1];
+  
+  const currentChartData = [
+    { name: 'RAM', value: latestData?.ram.used || 0, fill: "hsl(var(--chart-2))" },
+  ]
+
+  function calculateAngle(percentage) {
+    if (percentage < 0 || percentage > 100) {
+        return 0;
     }
-    return (value / 100) * 360;
-}
-  // memoryUsage
+    return (percentage / 100) * 360;
+  }
+
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
-        <CardTitle> Memory Usage Over Time</CardTitle>
+        <CardTitle>RAM Usage</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
@@ -49,9 +50,9 @@ export function Radialchart({ data }) {
           className="mx-auto aspect-square max-h-[250px]"
         >
           <RadialBarChart
-            data={chartData}
+            data={currentChartData}
             startAngle={0}
-            endAngle={convertToDegrees(Data?.memoryUsage)}
+            endAngle={calculateAngle(latestData?.ram.used)}
             innerRadius={80}
             outerRadius={150}
           >
@@ -62,7 +63,7 @@ export function Radialchart({ data }) {
               className="first:fill-muted last:fill-background"
               polarRadius={[86, 74]}
             />
-            <RadialBar dataKey="visitors" background cornerRadius={10} />
+            <RadialBar dataKey="value" background cornerRadius={10} />
             <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
               <Label
                 content={({ viewBox }) => {
@@ -79,14 +80,14 @@ export function Radialchart({ data }) {
                           y={viewBox.cy}
                           className="fill-foreground text-4xl font-bold"
                         >
-                          {Data?.memoryUsage.toLocaleString()}
+                          {latestData?.ram.used}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
                           className="fill-muted-foreground"
                         >
-                          Memory Usage
+                          RAM Usage
                         </tspan>
                       </text>
                     )
@@ -99,10 +100,7 @@ export function Radialchart({ data }) {
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
+          RAM Usage: {latestData?.ram.used}% <TrendingUp className="h-4 w-4" />
         </div>
       </CardFooter>
     </Card>
